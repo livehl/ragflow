@@ -1,0 +1,6 @@
+FROM infiniflow/ragflow:v0.17.0
+ADD ./deepdoc/vision /ragflow/deepdoc/vision
+ADD ./api/utils/file_utils.py /ragflow/api/utils/file_utils.py
+ADD ./rag/llm/embedding_model.py /ragflow/rag/llm/embedding_model.py
+
+ENTRYPOINT ["./entrypoint.sh"]

@@ -1,3 +1,0 @@
-FROM infiniflow/ragflow:v0.17.0
-ADD gpu_server.py /ragflow/gpu_server.py
-RUN  python3 -u /ragflow/gpu_server.py
