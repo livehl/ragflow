@@ -1,0 +1,44 @@
+
+FROM node:slim as build
+ENV https_proxy=http://192.168.10.3:7890
+ADD ./web ./web
+RUN  cd ./web &&  npm i --force && npm run build
+
+FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+USER  root
+
+WORKDIR /ragflow
+
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6 libgl1  python3-dev    gcc-9  gcc g++  g++-9 libc-dev nginx -y
+
+add requirements.txt requirements.txt
+
+RUN pip install -i https://mirror-pip-cd.aios123.com/root/pypi  -r requirements.txt
+
+RUN pip uninstall -y onnxruntime-gpu onnxruntime
+RUN  https_proxy=http://192.168.10.3:7890    pip install onnxruntime-gpu==1.17.1 --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
+
+RUN pip install -i https://mirror-pip-cd.aios123.com/root/pypi  -U  huggingface-hub
+
+RUN pip install -i https://mirror-pip-cd.aios123.com/root/pypi  google-generativeai   python-docx  pymysql graspologic
+
+copy --from=build ./web/dist ./web/dist
+
+
+
+
+
+ADD ./api ./api
+ADD ./conf ./conf
+ADD ./deepdoc ./deepdoc
+ADD ./rag ./rag
+ADD ./agent ./agent
+ADD ./graphrag ./graphrag
+
+ENV PYTHONPATH=/ragflow/
+ENV HF_ENDPOINT=https://hf-mirror.com
+
+ADD docker/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh"]

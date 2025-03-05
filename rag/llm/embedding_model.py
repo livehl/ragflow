@@ -28,11 +28,12 @@ import numpy as np
 import asyncio
 
 from api import settings
-from api.utils.file_utils import get_home_cache_dir
+from api.utils.file_utils import get_project_base_directory,get_gpu_server,encode_data,decode_data
 from rag.utils import num_tokens_from_string, truncate
 import google.generativeai as genai
 import json
 
+import requests
 
 class Base(ABC):
     def __init__(self, key, model_name):
@@ -73,25 +74,25 @@ class DefaultEmbedding(Base):
         ^_-
 
         """
-        if not settings.LIGHTEN:
-            with DefaultEmbedding._model_lock:
-                from FlagEmbedding import FlagModel
-                import torch
-                if not DefaultEmbedding._model or model_name != DefaultEmbedding._model_name:
-                    try:
-                        DefaultEmbedding._model = FlagModel(os.path.join(get_home_cache_dir(), re.sub(r"^[a-zA-Z0-9]+/", "", model_name)),
-                                                            query_instruction_for_retrieval="为这个句子生成表示以用于检索相关文章：",
-                                                            use_fp16=torch.cuda.is_available())
-                        DefaultEmbedding._model_name = model_name
-                    except Exception:
-                        model_dir = snapshot_download(repo_id="BAAI/bge-large-zh-v1.5",
-                                                      local_dir=os.path.join(get_home_cache_dir(), re.sub(r"^[a-zA-Z0-9]+/", "", model_name)),
-                                                      local_dir_use_symlinks=False)
-                        DefaultEmbedding._model = FlagModel(model_dir,
-                                                            query_instruction_for_retrieval="为这个句子生成表示以用于检索相关文章：",
-                                                            use_fp16=torch.cuda.is_available())
-        self._model = DefaultEmbedding._model
-        self._model_name = DefaultEmbedding._model_name
+        # if not settings.LIGHTEN:
+        #     with DefaultEmbedding._model_lock:
+        #         from FlagEmbedding import FlagModel
+        #         import torch
+        #         if not DefaultEmbedding._model or model_name != DefaultEmbedding._model_name:
+        #             try:
+        #                 DefaultEmbedding._model = FlagModel(os.path.join(get_home_cache_dir(), re.sub(r"^[a-zA-Z0-9]+/", "", model_name)),
+        #                                                     query_instruction_for_retrieval="为这个句子生成表示以用于检索相关文章：",
+        #                                                     use_fp16=torch.cuda.is_available())
+        #                 DefaultEmbedding._model_name = model_name
+        #             except Exception:
+        #                 model_dir = snapshot_download(repo_id="BAAI/bge-large-zh-v1.5",
+        #                                               local_dir=os.path.join(get_home_cache_dir(), re.sub(r"^[a-zA-Z0-9]+/", "", model_name)),
+        #                                               local_dir_use_symlinks=False)
+        #                 DefaultEmbedding._model = FlagModel(model_dir,
+        #                                                     query_instruction_for_retrieval="为这个句子生成表示以用于检索相关文章：",
+        #                                                     use_fp16=torch.cuda.is_available())
+        # self._model = DefaultEmbedding._model
+        # self._model_name = DefaultEmbedding._model_name
 
     def encode(self, texts: list):
         batch_size = 16
@@ -100,13 +101,19 @@ class DefaultEmbedding(Base):
         for t in texts:
             token_count += num_tokens_from_string(t)
         ress = []
+        def net_encode(text):
+            outputs = requests.post(get_gpu_server()+"/bge/encode", json={"text": encode_data(text)}).text
+            return decode_data(outputs)
         for i in range(0, len(texts), batch_size):
-            ress.extend(self._model.encode(texts[i:i + batch_size]).tolist())
+            ress.extend(net_encode(texts[i:i + batch_size]).tolist())
         return np.array(ress), token_count
 
     def encode_queries(self, text: str):
         token_count = num_tokens_from_string(text)
-        return self._model.encode_queries([text]).tolist()[0], token_count
+        def net_encode_query(text):
+            outputs = requests.post(get_gpu_server()+"/bge/encode_queries", json={"text": encode_data(text)}).text
+            return decode_data(outputs)
+        return net_encode_query([text]).tolist()[0], token_count
 
 
 class OpenAIEmbed(Base):

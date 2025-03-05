@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import logging
 import copy
 import time
@@ -21,7 +20,8 @@ import os
 
 from huggingface_hub import snapshot_download
 
-from api.utils.file_utils import get_project_base_directory
+from api.utils.file_utils import get_project_base_directory,get_gpu_server,encode_data,decode_data
+import requests
 from .operators import *  # noqa: F403
 from . import operators
 import math
@@ -79,12 +79,6 @@ def load_model(model_dir, nm):
             model_file_path))
 
     def cuda_is_available():
-        try:
-            import torch
-            if torch.cuda.is_available():
-                return True
-        except Exception:
-            return False
         return False
 
     options = ort.SessionOptions()
@@ -379,7 +373,10 @@ class TextRecognizer(object):
             input_dict[self.input_tensor.name] = norm_img_batch
             for i in range(100000):
                 try:
-                    outputs = self.predictor.run(None, input_dict, self.run_options)
+                    #换成网络调用
+                    outputs = requests.post(get_gpu_server()+"/rec", json={"img": encode_data(input_dict)}).text
+                    outputs = decode_data(outputs)
+                    # outputs = self.predictor.run(None, input_dict, self.run_options)
                     break
                 except Exception as e:
                     if i >= 3:
@@ -492,7 +489,9 @@ class TextDetector(object):
         input_dict[self.input_tensor.name] = img
         for i in range(100000):
             try:
-                outputs = self.predictor.run(None, input_dict, self.run_options)
+                outputs = requests.post(get_gpu_server()+"/det", json={"img": encode_data(input_dict)}).text
+                outputs = decode_data(outputs)
+                # outputs = self.predictor.run(None, input_dict, self.run_options)
                 break
             except Exception as e:
                 if i >= 3:

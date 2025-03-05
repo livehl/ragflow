@@ -13,10 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import logging
 import os
 import math
+from api.utils.file_utils import get_project_base_directory,get_gpu_server,encode_data,decode_data
+import requests
 import numpy as np
 import cv2
 from functools import cmp_to_key
@@ -50,6 +51,7 @@ class Recognizer(object):
         self.output_names = [node.name for node in self.ort_sess.get_outputs()]
         self.input_shape = self.ort_sess.get_inputs()[0].shape[2:4]
         self.label_list = label_list
+        self.task_name = task_name
 
     @staticmethod
     def sort_Y_firstly(arr, threashold):
@@ -424,7 +426,11 @@ class Recognizer(object):
             inputs = self.preprocess(batch_image_list)
             logging.debug("preprocess")
             for ins in inputs:
-                bb = self.postprocess(self.ort_sess.run(None, {k:v for k,v in ins.items() if k in self.input_names}, self.run_options)[0], ins, thr)
+                input_dict= {k: v for k, v in ins.items() if k in self.input_names}
+                outputs = requests.post(get_gpu_server()+"/layout/"+self.task_name, json={"img": encode_data(input_dict)}).text
+                m_r = decode_data(outputs)[0]
+                # m_r=self.ort_sess.run(None,input_dict, self.run_options)[0]
+                bb = self.postprocess(m_r, ins, thr)
                 res.append(bb)
 
         #seeit.save_results(image_list, res, self.label_list, threshold=thr)
