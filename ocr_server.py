@@ -1,14 +1,10 @@
 import base64
 import os
 import pickle
-import re
-
-from FlagEmbedding import FlagModel
 from flask import Flask
 from flask import request
 from flask_cors import CORS
 import onnxruntime as ort
-loaded_models = {}
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 app = Flask(__name__)
@@ -30,11 +26,6 @@ def cuda_is_available():
 
 def load_model(model_dir, nm):
     model_file_path = os.path.join(model_dir, nm + ".onnx")
-    global loaded_models
-    loaded_model = loaded_models.get(model_file_path)
-    if loaded_model:
-        print(f"load_model {model_file_path} reuses cached model")
-        return loaded_model
 
     if not os.path.exists(model_file_path):
         raise ValueError("not find model file path {}".format(
@@ -83,12 +74,6 @@ model_path="/ragflow/rag/res/deepdoc"
 det_predictor, det_run_options = load_model(model_path, 'det')
 rec_predictor, rec_run_options = load_model(model_path, 'rec')
 
-bge= FlagModel("/root/.ragflow/bge-large-zh-v1.5",
-    query_instruction_for_retrieval="为这个句子生成表示以用于检索相关文章：",
-    use_fp16=cuda_is_available())
-from threading import Lock
-bge_lock = Lock()
-
 def decode_data(data):
     return pickle.loads(base64.decodebytes(bytes(data, "utf-8")))
 
@@ -107,22 +92,6 @@ def recect_fun():
     img = decode_data(request.json["img"])
     ret = rec_predictor.run(None, img, rec_run_options)
     return encode_data(ret)
-
-
-@app.route('/bge/encode', methods=['POST'])
-def bge_encode():
-    text = decode_data(request.json["text"])
-    with bge_lock:
-        return encode_data(bge.encode(text))
-
-
-@app.route('/bge/encode_queries', methods=['POST'])
-def bge_encode_queries():
-    text = decode_data(request.json["text"])
-    with bge_lock:
-        return encode_data(bge.encode_queries(text))
-
-
 @app.route('/layout/<name>', methods=['POST'])
 def layout_fun(name):
     if name not in app.layout_model:
