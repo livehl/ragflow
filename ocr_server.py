@@ -65,7 +65,6 @@ def load_model(model_dir, nm):
         run_options.add_run_config_entry("memory.enable_memory_arena_shrinkage", "cpu")
         print(f"load_model {model_file_path} uses CPU")
     loaded_model = (sess, run_options)
-    loaded_models[model_file_path] = loaded_model
     return loaded_model
 
 
