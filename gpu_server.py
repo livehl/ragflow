@@ -120,6 +120,16 @@ def bge_encode_queries():
     return encode_data(bge.encode_queries(text))
 
 
+@app.route('/layout/<name>', methods=['POST'])
+def layout_fun(name):
+    if name not in app.layout_model:
+        app.layout_model[name] = load_model(model_path, name)
+    pre,opt=app.layout_model[name]
+    img = decode_data(request.json["img"])
+    ret = pre.run(None, img, opt)
+    return encode_data(ret)
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1000)
