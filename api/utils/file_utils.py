@@ -85,6 +85,9 @@ def get_home_cache_dir():
 def get_gpu_server():
     return os.getenv("RAG_GPU_SERVER") or "http://127.0.0.1:1000"
 
+def get_model_server():
+    return os.getenv("RAG_MODEL_SERVER") or "http://127.0.0.1:1000"
+
 
 def decode_data(data):
     return pickle.loads(base64.decodebytes(bytes(data, "utf-8")))
