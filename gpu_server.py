@@ -55,7 +55,7 @@ def load_model(model_dir, nm):
     if cuda_is_available():
         cuda_provider_options = {
             "device_id": 0, # Use specific GPU
-            "gpu_mem_limit": 512 * 1024 * 1024, # Limit gpu memory
+            "gpu_mem_limit": 2*1024 * 1024 * 1024, # Limit gpu memory
             "arena_extend_strategy": "kNextPowerOfTwo",  # gpu memory allocation strategy
         }
         sess = ort.InferenceSession(
@@ -86,7 +86,8 @@ rec_predictor, rec_run_options = load_model(model_path, 'rec')
 bge= FlagModel("/root/.ragflow/bge-large-zh-v1.5",
     query_instruction_for_retrieval="为这个句子生成表示以用于检索相关文章：",
     use_fp16=cuda_is_available())
-
+from threading import Lock
+bge_lock = Lock()
 
 def decode_data(data):
     return pickle.loads(base64.decodebytes(bytes(data, "utf-8")))
@@ -111,13 +112,15 @@ def recect_fun():
 @app.route('/bge/encode', methods=['POST'])
 def bge_encode():
     text = decode_data(request.json["text"])
-    return encode_data(bge.encode(text))
+    with bge_lock:
+        return encode_data(bge.encode(text))
 
 
 @app.route('/bge/encode_queries', methods=['POST'])
 def bge_encode_queries():
     text = decode_data(request.json["text"])
-    return encode_data(bge.encode_queries(text))
+    with bge_lock:
+        return encode_data(bge.encode_queries(text))
 
 
 @app.route('/layout/<name>', methods=['POST'])
