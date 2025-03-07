@@ -1,6 +1,8 @@
 import base64
 import os
 import pickle
+import time
+
 from flask import Flask
 from flask import request
 from flask_cors import CORS
@@ -109,16 +111,26 @@ def layout_fun(name):
 
 @app.route('/bge/encode', methods=['POST'])
 def bge_encode():
+    start_time = time.time()
     text = decode_data(request.json["text"])
-    with bge_lock:
-        return encode_data(bge.encode(text))
+    print(len(text))
+    try:
+        with bge_lock:
+            return encode_data(bge.encode(text))
+    finally:
+        print(f"🕒 Processing time: {time.time() - start_time:.2f}s")
 
 
 @app.route('/bge/encode_queries', methods=['POST'])
 def bge_encode_queries():
+    start_time = time.time()
     text = decode_data(request.json["text"])
-    with bge_lock:
-        return encode_data(bge.encode_queries(text))
+    print(len(text))
+    try:
+        with bge_lock:
+            return encode_data(bge.encode_queries(text))
+    finally:
+        print(f"🕒 Processing time: {time.time() - start_time:.2f}s")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1000)
