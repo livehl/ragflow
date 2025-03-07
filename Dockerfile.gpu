@@ -1,4 +1,6 @@
 FROM infiniflow/ragflow:v0.17.0
 ADD ocr_server.py /ragflow/ocr_server.py
 ADD model_server.py /ragflow/model_server.py
+ADD gpu_server.py /ragflow/gpu_server.py
+ADD model.py /ragflow/model.py
 CMD  python3 -u /ragflow/gpu_server.py
