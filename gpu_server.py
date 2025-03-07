@@ -2,7 +2,7 @@ import base64
 import os
 import pickle
 import time
-
+import numpy as np
 from flask import Flask
 from flask import request
 from flask_cors import CORS
@@ -43,9 +43,8 @@ def layout_fun(name):
 def bge_encode():
     start_time = time.time()
     text = decode_data(request.json["text"])
-    print(len(text))
     try:
-        return encode_data(encode(text))
+        return encode_data(np.array([encode(t) for t in text ]))
     finally:
         print(f"🕒 Processing time: {time.time() - start_time:.2f}s")
 
@@ -54,10 +53,8 @@ def bge_encode():
 def bge_encode_queries():
     start_time = time.time()
     text = decode_data(request.json["text"])
-    print(len(text))
-    print(text)
     try:
-        return encode_data(encode_queries(text))
+        return encode_data(np.array([encode_queries(t) for t in text ]))
     finally:
         print(f"🕒 Processing time: {time.time() - start_time:.2f}s")
 
