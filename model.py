@@ -35,9 +35,9 @@ def load_model(model_dir, nm):
     options = ort.SessionOptions()
     options.enable_cpu_mem_arena = True
     options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
-    options.intra_op_num_threads = 32
-    options.inter_op_num_threads = 32
-    options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+    options.intra_op_num_threads = 16
+    options.inter_op_num_threads = 16
+    options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
 
 
     # https://github.com/microsoft/onnxruntime/issues/9509#issuecomment-951546580
@@ -46,7 +46,7 @@ def load_model(model_dir, nm):
     if cuda_is_available():
         cuda_provider_options = {
             "device_id": 0, # Use specific GPU
-            "gpu_mem_limit": 512 * 1024 * 1024, # Limit gpu memory
+            "gpu_mem_limit": 12*1024 * 1024 * 1024, # Limit gpu memory
             "arena_extend_strategy": "kNextPowerOfTwo",  # gpu memory allocation strategy
         }
         sess = ort.InferenceSession(
