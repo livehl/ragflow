@@ -46,7 +46,7 @@ def load_model(model_dir, nm):
     if cuda_is_available():
         cuda_provider_options = {
             "device_id": 0, # Use specific GPU
-            "gpu_mem_limit": 12*1024 * 1024 * 1024, # Limit gpu memory
+            "gpu_mem_limit": 4*1024 * 1024 * 1024, # Limit gpu memory
             "arena_extend_strategy": "kNextPowerOfTwo",  # gpu memory allocation strategy
         }
         sess = ort.InferenceSession(
