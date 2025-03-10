@@ -6,6 +6,7 @@ import numpy as np
 from flask import Flask
 from flask import request
 from flask_cors import CORS
+from flask import Response
 from model import encode, encode_queries, run_model
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -14,37 +15,29 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 * 1024
 CORS(app, supports_credentials=True, origins='*')
 
 
-
-def decode_data(data):
-    return pickle.loads(base64.decodebytes(bytes(data, "utf-8")))
-
-def encode_data(data):
-    return base64.b64encode(pickle.dumps(data)).decode("utf-8")
-
-
 @app.route('/det', methods=['POST'])
 def detect_fun():
-    img = decode_data(request.json["img"])
+    img = pickle.loads(request.data)
     ret = run_model("det", img)
-    return encode_data(ret)
+    return Response(pickle.dumps(ret), mimetype='application/octet-stream')
 
 @app.route('/rec', methods=['POST'])
 def recect_fun():
-    img = decode_data(request.json["img"])
+    img = pickle.loads(request.data)
     ret = run_model("rec", img)
-    return encode_data(ret)
+    return Response(pickle.dumps(ret), mimetype='application/octet-stream')
 @app.route('/layout/<name>', methods=['POST'])
 def layout_fun(name):
-    img = decode_data(request.json["img"])
+    img = pickle.loads(request.data)
     ret = run_model(name, img)
-    return encode_data(ret)
+    return Response(pickle.dumps(ret), mimetype='application/octet-stream')
 
 @app.route('/bge/encode', methods=['POST'])
 def bge_encode():
     start_time = time.time()
-    text = decode_data(request.json["text"])
+    text = pickle.loads(request.data)
     try:
-        return encode_data(np.array([encode(t) for t in text ]))
+        return Response(pickle.dumps(encode(text)), mimetype='application/octet-stream')
     finally:
         print(f"🕒 Processing time: {time.time() - start_time:.2f}s")
 
@@ -52,9 +45,9 @@ def bge_encode():
 @app.route('/bge/encode_queries', methods=['POST'])
 def bge_encode_queries():
     start_time = time.time()
-    text = decode_data(request.json["text"])
+    text = pickle.loads(request.data)
     try:
-        return encode_data(np.array([encode_queries(t) for t in text ]))
+        return Response(pickle.dumps(encode_queries(text)), mimetype='application/octet-stream')
     finally:
         print(f"🕒 Processing time: {time.time() - start_time:.2f}s")
 
