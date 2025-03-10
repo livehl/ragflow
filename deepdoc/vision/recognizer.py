@@ -16,7 +16,8 @@
 import logging
 import os
 import math
-from api.utils.file_utils import get_project_base_directory,get_gpu_server,encode_data,decode_data
+import pickle
+from api.utils.file_utils import get_project_base_directory,get_gpu_server
 import requests
 import numpy as np
 import cv2
@@ -427,8 +428,8 @@ class Recognizer(object):
             logging.debug("preprocess")
             for ins in inputs:
                 input_dict= {k: v for k, v in ins.items() if k in self.input_names}
-                outputs = requests.post(get_gpu_server()+"/layout/"+self.task_name, json={"img": encode_data(input_dict)}).text
-                m_r = decode_data(outputs)[0]
+                outputs = requests.post(get_gpu_server()+"/layout/"+self.task_name, data=pickle.dumps(input_dict)).content
+                m_r = pickle.loads(outputs)[0]
                 # m_r=self.ort_sess.run(None,input_dict, self.run_options)[0]
                 bb = self.postprocess(m_r, ins, thr)
                 res.append(bb)

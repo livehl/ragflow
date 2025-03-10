@@ -15,12 +15,13 @@
 #
 import logging
 import copy
+import pickle
 import time
 import os
 
 from huggingface_hub import snapshot_download
 
-from api.utils.file_utils import get_project_base_directory,get_gpu_server,encode_data,decode_data
+from api.utils.file_utils import get_project_base_directory,get_gpu_server
 import requests
 from .operators import *  # noqa: F403
 from . import operators
@@ -374,8 +375,8 @@ class TextRecognizer(object):
             for i in range(100000):
                 try:
                     #换成网络调用
-                    outputs = requests.post(get_gpu_server()+"/rec", json={"img": encode_data(input_dict)}).text
-                    outputs = decode_data(outputs)
+                    outputs = requests.post(get_gpu_server()+"/rec", data=pickle.dumps(input_dict)).content
+                    outputs = pickle.loads(outputs)
                     # outputs = self.predictor.run(None, input_dict, self.run_options)
                     break
                 except Exception as e:
@@ -489,8 +490,8 @@ class TextDetector(object):
         input_dict[self.input_tensor.name] = img
         for i in range(100000):
             try:
-                outputs = requests.post(get_gpu_server()+"/det", json={"img": encode_data(input_dict)}).text
-                outputs = decode_data(outputs)
+                outputs = requests.post(get_gpu_server()+"/det", data=pickle.dumps(input_dict)).content
+                outputs = pickle.loads(outputs)
                 # outputs = self.predictor.run(None, input_dict, self.run_options)
                 break
             except Exception as e:
