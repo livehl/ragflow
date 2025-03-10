@@ -5,6 +5,7 @@ from flask import Flask
 from flask import request
 from flask_cors import CORS
 import onnxruntime as ort
+from flask import Response
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 app = Flask(__name__)
@@ -73,32 +74,27 @@ model_path="/ragflow/rag/res/deepdoc"
 det_predictor, det_run_options = load_model(model_path, 'det')
 rec_predictor, rec_run_options = load_model(model_path, 'rec')
 
-def decode_data(data):
-    return pickle.loads(base64.decodebytes(bytes(data, "utf-8")))
-
-def encode_data(data):
-    return base64.b64encode(pickle.dumps(data)).decode("utf-8")
 
 
 @app.route('/det', methods=['POST'])
 def detect_fun():
-    img = decode_data(request.json["img"])
+    img = pickle.loads(request.data)
     ret = det_predictor.run(None, img, det_run_options)
-    return encode_data(ret)
+    return Response(pickle.dumps(ret), mimetype='application/octet-stream')
 
 @app.route('/rec', methods=['POST'])
 def recect_fun():
-    img = decode_data(request.json["img"])
+    img = pickle.loads(request.data)
     ret = rec_predictor.run(None, img, rec_run_options)
-    return encode_data(ret)
+    return Response(pickle.dumps(ret), mimetype='application/octet-stream')
 @app.route('/layout/<name>', methods=['POST'])
 def layout_fun(name):
     if name not in app.layout_model:
         app.layout_model[name] = load_model(model_path, name)
     pre,opt=app.layout_model[name]
-    img = decode_data(request.json["img"])
+    img = pickle.loads(request.data)
     ret = pre.run(None, img, opt)
-    return encode_data(ret)
+    return Response(pickle.dumps(ret), mimetype='application/octet-stream')
 
 
 

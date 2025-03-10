@@ -6,6 +6,7 @@ from FlagEmbedding import FlagModel
 from flask import Flask
 from flask import request
 from flask_cors import CORS
+from flask import Response
 
 loaded_models = {}
 
@@ -36,25 +37,18 @@ from threading import Lock
 bge_lock = Lock()
 
 
-def decode_data(data):
-    return pickle.loads(base64.decodebytes(bytes(data, "utf-8")))
-
-
-def encode_data(data):
-    return base64.b64encode(pickle.dumps(data)).decode("utf-8")
-
 @app.route('/bge/encode', methods=['POST'])
 def bge_encode():
-    text = decode_data(request.json["text"])
+    text = pickle.loads(request.data)
     with bge_lock:
-        return encode_data(bge.encode(text))
+        return Response(pickle.dumps(bge.encode(text)), mimetype='application/octet-stream')
 
 
 @app.route('/bge/encode_queries', methods=['POST'])
 def bge_encode_queries():
-    text = decode_data(request.json["text"])
+    text = pickle.loads(request.data)
     with bge_lock:
-        return encode_data(bge.encode_queries(text))
+        return Response(pickle.dumps(bge.encode_queries(text)), mimetype='application/octet-stream')
 
 
 
