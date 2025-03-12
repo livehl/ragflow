@@ -1,8 +1,6 @@
-import base64
 import os
 import pickle
 import time
-import numpy as np
 from flask import Flask
 from flask import request
 from flask_cors import CORS
