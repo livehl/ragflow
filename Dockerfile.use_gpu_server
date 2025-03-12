@@ -1,5 +1,6 @@
-FROM infiniflow/ragflow:v0.17.0-slim
-ADD ./deepdoc/vision /ragflow/deepdoc/vision
+FROM infiniflow/ragflow:v0.17.1-slim
+ADD ./deepdoc/vision/ocr.py /ragflow/deepdoc/vision/ocr.py
+ADD ./deepdoc/vision/recognizer.py /ragflow/deepdoc/vision/recognizer.py
 ADD ./api/utils/file_utils.py /ragflow/api/utils/file_utils.py
 ADD ./rag/llm/embedding_model.py /ragflow/rag/llm/embedding_model.py
 

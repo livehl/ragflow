@@ -13,24 +13,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 import logging
 import os
 import math
 import pickle
-from api.utils.file_utils import get_project_base_directory,get_gpu_server
 import requests
 import numpy as np
 import cv2
 from functools import cmp_to_key
 
 
-from api.utils.file_utils import get_project_base_directory
+from api.utils.file_utils import get_project_base_directory,get_gpu_server
 from .operators import *  # noqa: F403
 from .operators import preprocess
 from . import operators
 from .ocr import load_model
 
-class Recognizer(object):
+class Recognizer:
     def __init__(self, label_list, task_name, model_dir=None):
         """
         If you have trouble downloading HuggingFace models, -_^ this might help!!

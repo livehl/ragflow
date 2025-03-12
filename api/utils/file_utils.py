@@ -16,7 +16,6 @@
 import base64
 import json
 import os
-import pickle
 import re
 import sys
 import threading
@@ -88,12 +87,6 @@ def get_gpu_server():
 def get_model_server():
     return os.getenv("RAG_MODEL_SERVER") or "http://127.0.0.1:1000"
 
-
-def decode_data(data):
-    return pickle.loads(base64.decodebytes(bytes(data, "utf-8")))
-
-def encode_data(data):
-    return base64.b64encode(pickle.dumps(data)).decode("utf-8")
 @cached(cache=LRUCache(maxsize=10))
 def load_json_conf(conf_path):
     if os.path.isabs(conf_path):

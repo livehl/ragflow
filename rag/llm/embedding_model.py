@@ -26,7 +26,6 @@ import dashscope
 from openai import OpenAI
 import numpy as np
 import asyncio
-import pickle
 
 from api import settings
 from api.utils.file_utils import get_project_base_directory,get_model_server
@@ -35,6 +34,7 @@ import google.generativeai as genai
 import json
 
 import requests
+import pickle
 
 class Base(ABC):
     def __init__(self, key, model_name):
